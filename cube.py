@@ -85,7 +85,8 @@ def onStep():
 	camera.step()
 
 	app.group.clear()
-	cmu3dlib.Renderer().Draw(mesh, camera, colorShadeFunction)
+	print(camera.Position)
+	cmu3dlib.Renderer.Draw(mesh, camera, colorShadeFunction)
 
 lastMouseX = None
 lastMouseY = None

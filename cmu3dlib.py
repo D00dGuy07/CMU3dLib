@@ -1,4 +1,5 @@
 from cmu_graphics import *
+import math
 import glm
 
 # Matrix to convert -1:1 screen coordinates to pixel coordinates
@@ -147,31 +148,45 @@ class Renderer:
 				vertices[triangle.z]
 			]
 
-			color = shadeFunc(
-				Vec4toVec3(triVertices[0]), 
-				Vec4toVec3(triVertices[1]), 
-				Vec4toVec3(triVertices[2])
-			)
-
-			screenCoords = []
+			verticesInFront = 0
 			for vertex in triVertices:
-				# Apply view matrix and projection matrix
-				matrix = projection * view
-				vertex = matrix * vertex
+				dot = glm.dot(camera.LookVector, glm.normalize(glm.vec3(vertex) - camera.Position))
 
-				if (vertex.w != 0):
-					vertex.x /= vertex.w
-					vertex.y /= vertex.w
+				if math.copysign(1, dot) == 1:
+					verticesInFront += 1
 
-				# Apply viewport transform
-				vertex *= viewTransform
+			if verticesInFront > 0:
+				color = shadeFunc(
+					Vec4toVec3(triVertices[0]), 
+					Vec4toVec3(triVertices[1]), 
+					Vec4toVec3(triVertices[2])
+				)
 
-				# Convert to vec2 and put in list
-				screenCoords.append(glm.vec2(vertex.x + 200, -vertex.y + 200))
+				screenCoords = []
+				for vertex in triVertices:
+					# Apply view matrix and projection matrix
+					matrix = projection * view
+					vertex = matrix * vertex
 
-			Polygon(
-				screenCoords[0].x, screenCoords[0].y,
-				screenCoords[1].x, screenCoords[1].y,
-				screenCoords[2].x, screenCoords[2].y,
-				fill=rgb(color.x, color.y, color.z)
-			)
+					if (vertex.w != 0):
+						vertex.x /= vertex.w
+						vertex.y /= vertex.w
+
+					# Apply viewport transform
+					vertex *= viewTransform
+
+					# Convert to vec2 and put in list
+					screenCoords.append(glm.vec2(vertex.x + 200, -vertex.y + 200))
+
+				coordsOutScreen = 0
+				for coord in screenCoords:
+					if coord.x < 0 or coord.y < 0 or coord.x > 399 or coord.y > 399:
+						coordsOutScreen += 1
+
+				if coordsOutScreen < 3:
+					Polygon(
+						screenCoords[0].x, screenCoords[0].y,
+						screenCoords[1].x, screenCoords[1].y,
+						screenCoords[2].x, screenCoords[2].y,
+						fill=rgb(color.x, color.y, color.z)
+					)

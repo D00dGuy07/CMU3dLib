@@ -135,6 +135,7 @@ class Renderer:
 	def Draw(mesh: Mesh, camera: Camera, shadeFunc):
 		view = camera.GetViewMatrix()
 		projection = glm.perspective(glm.radians(camera.FOV), 1, camera.NearClip, camera.FarClip)
+		pvmatrix = projection * view
 		viewTransform = viewport(400, 400)
 
 		vertices = mesh.GetTransformedVertices()
@@ -148,6 +149,7 @@ class Renderer:
 				vertices[triangle.z]
 			]
 
+			# Cull triangles behind camera
 			verticesInFront = 0
 			for vertex in triVertices:
 				dot = glm.dot(camera.LookVector, glm.normalize(glm.vec3(vertex) - camera.Position))
@@ -155,7 +157,19 @@ class Renderer:
 				if math.copysign(1, dot) == 1:
 					verticesInFront += 1
 
-			if verticesInFront > 0:
+			# Cull backfaces (this bit is kinda sus)
+			shouldntCull = False
+			normal = getNormal(
+				glm.vec3(triVertices[0]), 
+				glm.vec3(triVertices[1]), 
+				glm.vec3(triVertices[2])
+			)
+			facingVector = glm.normalize(
+				(glm.vec3(triVertices[0]) + glm.vec3(triVertices[1]) + glm.vec3(triVertices[2])) / 3 - camera.Position)
+			if not glm.dot(normal, facingVector) >= 0 and math.copysign(1, glm.dot(facingVector, camera.LookVector)) == 1:
+				shouldntCull = True
+
+			if verticesInFront > 0 and shouldntCull:
 				color = shadeFunc(
 					Vec4toVec3(triVertices[0]), 
 					Vec4toVec3(triVertices[1]), 
@@ -165,8 +179,7 @@ class Renderer:
 				screenCoords = []
 				for vertex in triVertices:
 					# Apply view matrix and projection matrix
-					matrix = projection * view
-					vertex = matrix * vertex
+					vertex = pvmatrix * vertex
 
 					if (vertex.w != 0):
 						vertex.x /= vertex.w

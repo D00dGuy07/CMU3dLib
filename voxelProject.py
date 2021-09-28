@@ -1,5 +1,6 @@
 from cmu_graphics import *
 from opensimplex import OpenSimplex
+import random
 import math
 import glm
 import cmu3dlib
@@ -30,12 +31,12 @@ class WorldMeshBuilder:
 	@staticmethod
 	def getNeighbors(world: World, x: int, y: int, z: int):
 		return {
-			"Front"  : 0 if (z - 1) <  0          else world.GetVoxel(x,     y,     z - 1),
-			"Back"   : 0 if (z + 1) >= world.Size else world.GetVoxel(x,     y,     z + 1),
-			"Left"   : 0 if (x - 1) <  0          else world.GetVoxel(x - 1, y,     z),
-			"Right"  : 0 if (x + 1) >= world.Size else world.GetVoxel(x + 1, y,     z),
-			"Bottom" : 0 if (y - 1) <  0          else world.GetVoxel(x,     y - 1, z),
-			"Top"    : 0 if (y + 1) >= world.Size else world.GetVoxel(x,     y + 1, z)
+			"Front"  : 1 if (z - 1) <  0          else world.GetVoxel(x,     y,     z - 1),
+			"Back"   : 1 if (z + 1) >= world.Size else world.GetVoxel(x,     y,     z + 1),
+			"Left"   : 1 if (x - 1) <  0          else world.GetVoxel(x - 1, y,     z),
+			"Right"  : 1 if (x + 1) >= world.Size else world.GetVoxel(x + 1, y,     z),
+			"Bottom" : 1 if (y - 1) <  0          else world.GetVoxel(x,     y - 1, z),
+			"Top"    : 1 if (y + 1) >= world.Size else world.GetVoxel(x,     y + 1, z)
 		}
 
 	@staticmethod
@@ -111,8 +112,11 @@ def GenWorld(world: World, seed: int, smoothing):
 				if y <= height:
 					world.SetVoxel(1, x, y, z)
 
-world = World(20)
-GenWorld(world, 1, 10)
+world = World(30)
+
+seed = random.randint(0, 1000000)
+print(seed)
+GenWorld(world, seed, 15)
 
 mesh = WorldMeshBuilder.GenMesh(world)
 mesh.Position = glm.vec3(0, 0, -10)
